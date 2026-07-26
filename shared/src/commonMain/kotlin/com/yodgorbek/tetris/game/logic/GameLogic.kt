@@ -7,7 +7,7 @@ import com.yodgorbek.tetris.game.state.GameStatus
 class GameLogic {
 
     fun move(state: GameState, direction: Offset): GameState {
-        if (state.status != GameStatus.RUNNING || state.currentPiece == null) return state
+        if (state.status != GameStatus.RUNNING || state.currentPiece == null || state.clearingLines.isNotEmpty()) return state
 
         val nextOffset = state.currentPiece.offset + direction
         if (checkCollision(state.board, state.currentPiece.type, state.currentPiece.rotation, nextOffset)) {
@@ -18,7 +18,7 @@ class GameLogic {
     }
 
     fun rotate(state: GameState, clockwise: Boolean): GameState {
-        if (state.status != GameStatus.RUNNING || state.currentPiece == null) return state
+        if (state.status != GameStatus.RUNNING || state.currentPiece == null || state.clearingLines.isNotEmpty()) return state
 
         val currentPiece = state.currentPiece
         val nextRotation = if (clockwise) currentPiece.rotation.rotateClockwise()
@@ -64,6 +64,9 @@ class GameLogic {
         return Tetromino(type = type, offset = Offset(3, 0))
     }
 
+    /**
+     * Places the current piece onto the board grid without clearing lines yet.
+     */
     fun lockPiece(state: GameState): GameState {
         val piece = state.currentPiece ?: return state
         val shape = piece.shape
@@ -77,32 +80,47 @@ class GameLogic {
             }
         }
 
-        var linesCleared = 0
-        val finalGrid = mutableListOf<List<Cell>>()
-        for (row in newGrid) {
+        val filledLines = mutableListOf<Int>()
+        newGrid.forEachIndexed { index, row ->
             if (row.all { it.occupied }) {
-                linesCleared++
-            } else {
-                finalGrid.add(row)
+                filledLines.add(index)
             }
         }
 
-        repeat(linesCleared) {
-            finalGrid.add(0, List(state.board.columns) { Cell.Empty })
+        return state.copy(
+            board = state.board.copy(grid = newGrid),
+            clearingLines = filledLines,
+            currentPiece = null,
+            canHold = true
+        )
+    }
+
+    /**
+     * Finalizes the clearing of lines, updating score and levels.
+     */
+    fun finalizeLineClear(state: GameState): GameState {
+        val linesToClear = state.clearingLines
+        if (linesToClear.isEmpty()) return state
+
+        val newGrid = state.board.grid.filterIndexed { index, _ ->
+            index !in linesToClear
+        }.toMutableList()
+
+        repeat(linesToClear.size) {
+            newGrid.add(0, List(state.board.columns) { Cell.Empty })
         }
 
-        val newBoard = state.board.copy(grid = finalGrid)
+        val linesCleared = linesToClear.size
         val nextScore = state.score + calculateScore(linesCleared, state.level)
         val nextLines = state.lines + linesCleared
         val nextLevel = (nextLines / 10) + 1
 
         return state.copy(
-            board = newBoard,
+            board = state.board.copy(grid = newGrid),
             score = nextScore,
             lines = nextLines,
             level = nextLevel,
-            currentPiece = null,
-            canHold = true
+            clearingLines = emptyList()
         )
     }
 

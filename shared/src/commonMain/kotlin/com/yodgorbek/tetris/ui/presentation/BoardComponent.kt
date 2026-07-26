@@ -1,10 +1,12 @@
 package com.yodgorbek.tetris.ui.presentation
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset as ComposeOffset
 import androidx.compose.ui.geometry.Size
@@ -12,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.yodgorbek.tetris.game.model.Board
-import com.yodgorbek.tetris.game.model.Cell
 import com.yodgorbek.tetris.game.model.Tetromino
 import com.yodgorbek.tetris.game.model.TetrominoType
 import com.yodgorbek.tetris.ui.theme.TetrisColors
@@ -22,8 +23,20 @@ fun BoardComponent(
     board: Board,
     currentPiece: Tetromino?,
     ghostOffset: com.yodgorbek.tetris.game.model.Offset?,
+    clearingLines: List<Int>,
+    lastLockTimestamp: Long,
     modifier: Modifier = Modifier
 ) {
+    val infiniteTransition = rememberInfiniteTransition()
+    val clearAlpha by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(150, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
     Box(
         modifier = modifier
             .aspectRatio(board.columns.toFloat() / board.rows.toFloat())
@@ -36,19 +49,22 @@ fun BoardComponent(
 
             // Draw board grid and cells
             for (y in 0 until board.rows) {
+                val isClearing = y in clearingLines
+                val rowAlpha = if (isClearing) clearAlpha else 1f
+
                 for (x in 0 until board.columns) {
                     val cell = board.grid[y][x]
                     drawBrick(
                         x = x.toFloat(),
                         y = y.toFloat(),
                         size = blockSize,
-                        color = if (cell.occupied) Color(cell.color) else TetrisColors.BrickNone
+                        color = if (cell.occupied) Color(cell.color).copy(alpha = rowAlpha) else TetrisColors.BrickNone
                     )
                 }
             }
 
             // Draw ghost piece
-            if (ghostOffset != null && currentPiece != null) {
+            if (ghostOffset != null && currentPiece != null && clearingLines.isEmpty()) {
                 currentPiece.shape.forEach { block ->
                     drawBrick(
                         x = (block.x + ghostOffset.x).toFloat(),
@@ -85,7 +101,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBrick(
 
     // Outer border
     drawRect(
-        color = Color.Black.copy(alpha = 0.2f),
+        color = Color.Black.copy(alpha = 0.2f * color.alpha),
         topLeft = ComposeOffset(x * size, y * size),
         size = Size(size, size),
         style = Stroke(width = 1f)
@@ -100,7 +116,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBrick(
 
     // Inner square (Brick effect)
     drawRect(
-        color = Color.Black.copy(alpha = 0.1f),
+        color = Color.Black.copy(alpha = 0.1f * color.alpha),
         topLeft = ComposeOffset(x * size + size * 0.25f, y * size + size * 0.25f),
         size = Size(size * 0.5f, size * 0.5f),
         style = Stroke(width = 1f)

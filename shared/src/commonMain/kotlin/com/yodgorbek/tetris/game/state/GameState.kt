@@ -18,5 +18,7 @@ data class GameState(
     val level: Int = 1,
     val lines: Int = 0,
     val status: GameStatus = GameStatus.IDLE,
-    val isGhostEnabled: Boolean = true
+    val isGhostEnabled: Boolean = true,
+    val clearingLines: List<Int> = emptyList(),
+    val lastLockTimestamp: Long = 0L
 )
