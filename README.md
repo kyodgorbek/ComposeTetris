@@ -27,6 +27,12 @@ I have completed the core implementation of the Tetris engine and the primary UI
     - **Desktop:** Keyboard support (mapped via common `GameAction` dispatch).
 - **Overlays:** Start and Game Over screens.
 
+#### **CI/CD & Infrastructure**
+- **GitHub Actions:** Automated pipeline for:
+    - **Unit Tests:** Running shared logic tests on every push.
+    - **Android Build:** Automated generation of debug APKs.
+    - **Desktop Build:** Multi-OS packaging for Linux, macOS, and Windows.
+
 ### 🔄 Missing / Next Steps
 
 #### **Animations & Audio (Phase 9)**
