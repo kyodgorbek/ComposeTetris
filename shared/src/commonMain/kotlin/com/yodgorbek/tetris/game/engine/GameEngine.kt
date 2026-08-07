@@ -16,10 +16,10 @@ import kotlinx.datetime.Clock
 import kotlin.math.pow
 
 class GameEngine(
-    private val logic: GameLogic = GameLogic(),
-    private val randomizer: Randomizer = Randomizer(),
-    private val audioManager: AudioManager = AudioManager(),
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val logic: GameLogic,
+    private val randomizer: Randomizer,
+    private val audioManager: AudioManager,
+    private val scope: CoroutineScope
 ) {
     private val _state = MutableStateFlow(GameState())
     val state = _state.asStateFlow()
@@ -33,21 +33,41 @@ class GameEngine(
             GameAction.Resume -> resumeGame()
             GameAction.Restart -> restartGame()
             GameAction.MoveLeft -> {
-                _state.update { logic.move(it, Offset(-1, 0)) }
-                audioManager.playSound(SoundType.MOVE)
+                _state.update { currentState ->
+                    val nextState = logic.move(currentState, Offset(-1, 0))
+                    if (nextState != currentState) {
+                        audioManager.playSound(SoundType.MOVE)
+                    }
+                    nextState
+                }
             }
             GameAction.MoveRight -> {
-                _state.update { logic.move(it, Offset(1, 0)) }
-                audioManager.playSound(SoundType.MOVE)
+                _state.update { currentState ->
+                    val nextState = logic.move(currentState, Offset(1, 0))
+                    if (nextState != currentState) {
+                        audioManager.playSound(SoundType.MOVE)
+                    }
+                    nextState
+                }
             }
             GameAction.MoveDown -> tick()
             GameAction.RotateClockwise -> {
-                _state.update { logic.rotate(it, true) }
-                audioManager.playSound(SoundType.ROTATE)
+                _state.update { currentState ->
+                    val nextState = logic.rotate(currentState, true)
+                    if (nextState != currentState) {
+                        audioManager.playSound(SoundType.ROTATE)
+                    }
+                    nextState
+                }
             }
             GameAction.RotateCounterClockwise -> {
-                _state.update { logic.rotate(it, false) }
-                audioManager.playSound(SoundType.ROTATE)
+                _state.update { currentState ->
+                    val nextState = logic.rotate(currentState, false)
+                    if (nextState != currentState) {
+                        audioManager.playSound(SoundType.ROTATE)
+                    }
+                    nextState
+                }
             }
             GameAction.HardDrop -> _state.update { hardDrop(it) }
             GameAction.Hold -> _state.update { holdPiece(it) }
@@ -119,7 +139,7 @@ class GameEngine(
 
     private fun processLock(currentState: GameState): GameState {
         val lockedState = logic.lockPiece(currentState)
-        val timestamp = Clock.System.now().toEpochMilliseconds()
+        val timestamp = com.yodgorbek.tetris.currentTimeMillis()
 
         if (lockedState.clearingLines.isNotEmpty()) {
             audioManager.playSound(SoundType.CLEAR)
@@ -172,17 +192,25 @@ class GameEngine(
 
         audioManager.playSound(SoundType.MOVE)
 
-        return if (heldType == null) {
+        val targetType = heldType ?: currentState.nextPiece
+        val newNextPiece = if (heldType == null) randomizer.next() else currentState.nextPiece
+        val spawnedPiece = logic.spawnPiece(targetType)
+
+        return if (logic.checkCollision(currentState.board, spawnedPiece.type, spawnedPiece.rotation, spawnedPiece.offset)) {
+            audioManager.stopMusic()
+            audioManager.playSound(SoundType.GAME_OVER)
             currentState.copy(
                 heldPiece = currentType,
-                currentPiece = logic.spawnPiece(currentState.nextPiece),
-                nextPiece = randomizer.next(),
-                canHold = false
+                currentPiece = spawnedPiece,
+                nextPiece = newNextPiece,
+                canHold = false,
+                status = GameStatus.GAME_OVER
             )
         } else {
             currentState.copy(
                 heldPiece = currentType,
-                currentPiece = logic.spawnPiece(heldType),
+                currentPiece = spawnedPiece,
+                nextPiece = newNextPiece,
                 canHold = false
             )
         }

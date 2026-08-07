@@ -31,8 +31,7 @@ fun HUDComponent(
 ) {
     Column(
         modifier = modifier
-            .padding(8.dp)
-            .fillMaxHeight(),
+            .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         StatBox("SCORE", score.toString())

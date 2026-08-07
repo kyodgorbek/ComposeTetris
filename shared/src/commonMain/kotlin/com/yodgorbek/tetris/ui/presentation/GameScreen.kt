@@ -15,7 +15,7 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.yodgorbek.tetris.game.logic.GameLogic
 import com.yodgorbek.tetris.game.state.GameAction
 import com.yodgorbek.tetris.game.state.GameStatus
@@ -23,7 +23,7 @@ import com.yodgorbek.tetris.ui.theme.TetrisColors
 
 @Composable
 fun GameScreen(
-    viewModel: GameViewModel = viewModel { GameViewModel() }
+    viewModel: GameViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val highScores by viewModel.highScores.collectAsState()
@@ -62,7 +62,8 @@ fun GameScreen(
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.Top
             ) {

@@ -2,6 +2,7 @@ package com.yodgorbek.tetris.util
 
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.set
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -19,7 +20,7 @@ class PreferenceManager(private val settings: Settings = Settings()) {
 
     fun saveHighScore(score: Int) {
         val currentScores = getHighScores().toMutableList()
-        currentScores.add(HighScore(score, 0L)) // Simplification: 0 for date
+        currentScores.add(HighScore(score, com.yodgorbek.tetris.currentTimeMillis()))
         val sortedScores = currentScores.sortedByDescending { it.score }.take(5)
         settings["high_scores"] = json.encodeToString(sortedScores)
     }

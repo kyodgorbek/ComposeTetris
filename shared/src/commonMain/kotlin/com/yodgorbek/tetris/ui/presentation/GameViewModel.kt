@@ -11,16 +11,17 @@ import com.yodgorbek.tetris.game.state.GameStatus
 import com.yodgorbek.tetris.util.AudioManager
 import com.yodgorbek.tetris.util.PreferenceManager
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
-class GameViewModel : ViewModel() {
-
-    private val preferenceManager = PreferenceManager()
-    private val audioManager = AudioManager()
+class GameViewModel(
+    private val preferenceManager: PreferenceManager,
+    private val audioManager: AudioManager,
+    private val logic: GameLogic,
+    private val randomizer: Randomizer
+) : ViewModel() {
 
     private val engine = GameEngine(
-        logic = GameLogic(),
-        randomizer = Randomizer(),
+        logic = logic,
+        randomizer = randomizer,
         audioManager = audioManager,
         scope = viewModelScope
     )

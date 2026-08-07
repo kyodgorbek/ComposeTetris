@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset as ComposeOffset
 import androidx.compose.ui.geometry.Size
@@ -37,14 +38,25 @@ fun BoardComponent(
         )
     )
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
-            .aspectRatio(board.columns.toFloat() / board.rows.toFloat())
+            .fillMaxHeight()
             .background(TetrisColors.Background)
             .border(2.dp, Color.Black)
-            .padding(2.dp)
+            .padding(2.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
+        val boardWidth = maxWidth
+        val boardHeight = maxHeight
+
+        val potentialBlockSizeByWidth = boardWidth / board.columns
+        val potentialBlockSizeByHeight = boardHeight / board.rows
+        val blockSizeDp = minOf(potentialBlockSizeByWidth, potentialBlockSizeByHeight)
+
+        val actualBoardWidth = blockSizeDp * board.columns
+        val actualBoardHeight = blockSizeDp * board.rows
+
+        Canvas(modifier = Modifier.size(actualBoardWidth, actualBoardHeight)) {
             val blockSize = size.width / board.columns
 
             // Draw board grid and cells
@@ -66,24 +78,32 @@ fun BoardComponent(
             // Draw ghost piece
             if (ghostOffset != null && currentPiece != null && clearingLines.isEmpty()) {
                 currentPiece.shape.forEach { block ->
-                    drawBrick(
-                        x = (block.x + ghostOffset.x).toFloat(),
-                        y = (block.y + ghostOffset.y).toFloat(),
-                        size = blockSize,
-                        color = Color.Black.copy(alpha = 0.1f)
-                    )
+                    val x = block.x + ghostOffset.x
+                    val y = block.y + ghostOffset.y
+                    if (y in 0 until board.rows) {
+                        drawBrick(
+                            x = x.toFloat(),
+                            y = y.toFloat(),
+                            size = blockSize,
+                            color = Color.Black.copy(alpha = 0.1f)
+                        )
+                    }
                 }
             }
 
             // Draw current piece
             currentPiece?.let { piece ->
                 piece.shape.forEach { block ->
-                    drawBrick(
-                        x = (block.x + piece.offset.x).toFloat(),
-                        y = (block.y + piece.offset.y).toFloat(),
-                        size = blockSize,
-                        color = Color(getPieceColor(piece.type))
-                    )
+                    val x = block.x + piece.offset.x
+                    val y = block.y + piece.offset.y
+                    if (y in 0 until board.rows) {
+                        drawBrick(
+                            x = x.toFloat(),
+                            y = y.toFloat(),
+                            size = blockSize,
+                            color = Color(getPieceColor(piece.type))
+                        )
+                    }
                 }
             }
         }

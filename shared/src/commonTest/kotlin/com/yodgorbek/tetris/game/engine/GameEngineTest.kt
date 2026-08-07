@@ -4,6 +4,7 @@ import com.yodgorbek.tetris.game.logic.GameLogic
 import com.yodgorbek.tetris.game.logic.Randomizer
 import com.yodgorbek.tetris.game.state.GameAction
 import com.yodgorbek.tetris.game.state.GameStatus
+import com.yodgorbek.tetris.util.AudioManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
 import kotlin.test.Test
@@ -18,6 +19,7 @@ class GameEngineTest {
         val engine = GameEngine(
             logic = GameLogic(),
             randomizer = Randomizer(),
+            audioManager = AudioManager(),
             scope = backgroundScope
         )
 
@@ -31,7 +33,12 @@ class GameEngineTest {
 
     @Test
     fun testPauseResume() = runTest {
-        val engine = GameEngine(scope = backgroundScope)
+        val engine = GameEngine(
+            logic = GameLogic(),
+            randomizer = Randomizer(),
+            audioManager = AudioManager(),
+            scope = backgroundScope
+        )
         engine.dispatch(GameAction.Start)
 
         engine.dispatch(GameAction.Pause)

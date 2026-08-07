@@ -61,6 +61,9 @@ kotlin {
             implementation(libs.kotlinxDatetime)
             implementation(libs.kotlinxSerializationJson)
             implementation(libs.multiplatformSettingsNoArg)
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
